@@ -25,7 +25,21 @@ talks only to your local Rekordbox database and (optionally) the Spotify API.
 ## Quick start
 
 The app has two parts that run at the same time: a **backend** (FastAPI, port
-8000) and a **frontend** (Vite dev server, port 5173). Open two terminals.
+8000) and a **frontend** (Vite dev server, port 5173).
+
+**Fastest path (macOS/Linux):** after cloning, just run the helper script — it
+creates the Python venv, installs both backends' deps on first run, and starts
+both servers (Ctrl-C stops them):
+
+```bash
+./dev.sh
+```
+
+> Still quit Rekordbox first (it locks the database), and set up `backend/.env`
+> if you want the Spotify Compare feature — see below.
+
+To run the two parts manually (or on Windows), open two terminals and follow
+the steps below.
 
 ### 1. Clone
 
