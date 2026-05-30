@@ -4,4 +4,5 @@ pyrekordbox>=0.4.0
 sqlcipher3-wheels>=0.5.0  # prebuilt SQLCipher; required to read the encrypted Rekordbox 6/7 master.db
 spotipy>=2.23.0
 rapidfuzz>=3.5.0
+requests>=2.31.0
 python-dotenv>=1.0.0

@@ -398,6 +398,22 @@
   cursor: not-allowed;
 }
 
+.genre-select {
+  background: #1f1f1f;
+  color: #ddd;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.genre-select:disabled {
+  color: #555;
+  cursor: not-allowed;
+}
+
 .compare-summary {
   padding: 14px 20px;
   border-bottom: 1px solid #2a2a2a;
@@ -614,4 +630,14 @@
 
 .connect-spotify button.primary:hover {
   background: #1ed760;
+}
+
+.genre-tag {
+  display: inline-block;
+  background: #262630;
+  color: #b8c4e0;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+  margin: 1px 4px 1px 0;
 }

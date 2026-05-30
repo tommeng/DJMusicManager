@@ -189,23 +189,23 @@ export default function ComparePage() {
               </thead>
               <tbody>
                 {filteredResults.map((r, i) => (
-                  <tr key={r.spotify.id || i}>
+                  <tr key={r.track.id || i}>
                     <td className="col-status">
                       <StatusBadge status={r.match?.status || 'missing'} />
                     </td>
                     <td>
                       <a
                         className="track-title-link"
-                        href={r.spotify.url}
+                        href={r.track.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Open in Spotify"
                       >
-                        {r.spotify.title}
+                        {r.track.title}
                       </a>
                       <div className="track-meta">
-                        {r.spotify.artist}
-                        {r.spotify.album && <> · <span className="album">{r.spotify.album}</span></>}
+                        {r.track.artist}
+                        {r.track.album && <> · <span className="album">{r.track.album}</span></>}
                       </div>
                     </td>
                     <td>
@@ -221,12 +221,12 @@ export default function ComparePage() {
                     <td className="col-score">
                       {r.match ? `${r.match.score}%` : '—'}
                     </td>
-                    <td className="col-dur">{formatDuration(r.spotify.duration_ms)}</td>
+                    <td className="col-dur">{formatDuration(r.track.duration_ms)}</td>
                     <td className="col-copy">
                       <CopyButton
-                        text={`${r.spotify.title} ${r.spotify.artist}`}
-                        isCopied={copiedId === r.spotify.id}
-                        onCopy={() => setCopiedId(r.spotify.id)}
+                        text={`${r.track.title} ${r.track.artist}`}
+                        isCopied={copiedId === r.track.id}
+                        onCopy={() => setCopiedId(r.track.id)}
                       />
                     </td>
                   </tr>
