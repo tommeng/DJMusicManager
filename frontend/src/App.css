@@ -1,0 +1,617 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  background: #111;
+  padding: 10px 20px;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.app-header h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.app-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.app-nav button {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 13px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.app-nav button:hover {
+  background: #1f1f1f;
+  color: #ccc;
+}
+
+.app-nav button.active {
+  background: #2a2a3e;
+  color: #fff;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.status {
+  padding: 40px;
+  color: #888;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.status.error {
+  color: #ff6b6b;
+}
+
+.status.error strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+
+.status.error p {
+  margin-bottom: 6px;
+  color: #aaa;
+}
+
+.status .hint {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #222;
+  border-left: 3px solid #555;
+  border-radius: 2px;
+  color: #999;
+  font-size: 13px;
+}
+
+.status .hint code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: #333;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #ccc;
+}
+
+/* Playlist Panel */
+.playlist-panel {
+  width: 260px;
+  background: #1e1e1e;
+  border-right: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.playlist-panel-search {
+  position: relative;
+  padding: 10px 12px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.playlist-panel-search input {
+  width: 100%;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 6px 26px 6px 10px;
+  color: #ddd;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.playlist-panel-search input:focus {
+  outline: none;
+  border-color: #4a7fc1;
+}
+
+.playlist-panel-search input::placeholder {
+  color: #555;
+}
+
+.search-clear {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.search-clear:hover {
+  color: #ddd;
+}
+
+.playlist-panel-header {
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #555;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.refresh-btn {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  border-radius: 3px;
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #2a2a2a;
+  color: #ddd;
+  border-color: #444;
+}
+
+.refresh-btn:disabled {
+  cursor: wait;
+  color: #555;
+}
+
+.refresh-error {
+  padding: 8px 12px;
+  background: #3a2020;
+  color: #e57373;
+  font-size: 11px;
+  border-bottom: 1px solid #2a2a2a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.tree {
+  overflow-y: auto;
+  flex: 1;
+  padding-bottom: 8px;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding-right: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  user-select: none;
+}
+
+.tree-row:hover {
+  background: #252525;
+}
+
+.tree-icon {
+  display: inline-block;
+  width: 14px;
+  font-size: 9px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.tree-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #bbb;
+}
+
+.tree-row.folder .tree-name {
+  color: #888;
+  font-weight: 500;
+}
+
+.tree-count {
+  font-size: 11px;
+  color: #444;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.tree-row.active {
+  background: #1e2a3a;
+  box-shadow: inset 3px 0 0 #4a7fc1;
+}
+
+.tree-row.active .tree-name {
+  color: #fff;
+}
+
+/* Track Panel */
+.track-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.track-panel.empty {
+  align-items: center;
+  justify-content: center;
+  color: #3a3a3a;
+  font-size: 14px;
+}
+
+.track-panel-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.track-panel-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.track-count {
+  font-size: 12px;
+  color: #555;
+  font-weight: 400;
+}
+
+.track-table-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.track-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.track-panel thead th {
+  position: sticky;
+  top: 0;
+  background: #1e1e1e;
+  z-index: 1;
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.track-panel td {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #bbb;
+  border-bottom: 1px solid #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.track-panel tr:hover td {
+  background: #212121;
+  color: #ddd;
+}
+
+.col-num  { width: 40px; color: #444 !important; }
+.col-title    { width: 35%; }
+.col-artist   { width: 25%; }
+.col-bpm      { width: 70px; }
+.col-key      { width: 60px; }
+.col-duration { width: 70px; }
+
+/* Compare Page */
+.compare-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.compare-input {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.compare-input input {
+  flex: 1;
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #ddd;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.compare-input input:focus {
+  outline: none;
+  border-color: #4a7fc1;
+}
+
+.compare-input button {
+  background: #4a7fc1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.compare-input button:hover:not(:disabled) {
+  background: #5a8fd1;
+}
+
+.compare-input button:disabled {
+  background: #2a2a2a;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.compare-summary {
+  padding: 14px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.summary-title {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.summary-title strong {
+  color: #fff;
+  margin-right: 8px;
+}
+
+.summary-title .muted {
+  color: #666;
+  font-size: 12px;
+}
+
+.summary-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.stat {
+  background: #1f1f1f;
+  border: 1px solid #2a2a2a;
+  color: #aaa;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.stat:hover {
+  background: #252525;
+}
+
+.stat.active {
+  background: #2a2a3e;
+  border-color: #4a7fc1;
+  color: #fff;
+}
+
+.stat-n {
+  font-weight: 600;
+  margin-right: 4px;
+  color: #fff;
+}
+
+.stat.ok.active   { border-color: #4caf50; }
+.stat.warn.active { border-color: #f0c050; }
+.stat.miss.active { border-color: #e57373; }
+
+.compare-table-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compare-table thead th {
+  position: sticky;
+  top: 0;
+  background: #1e1e1e;
+  z-index: 1;
+  padding: 8px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.compare-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid #222;
+  vertical-align: top;
+  max-width: 0;
+}
+
+.compare-table tr:hover td {
+  background: #1f1f1f;
+}
+
+.compare-table .track-title {
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compare-table .track-title-link {
+  display: block;
+  color: #ddd;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compare-table .track-title-link:hover {
+  color: #1db954;
+  text-decoration: underline;
+}
+
+.compare-table .album {
+  color: #555;
+}
+
+.compare-table .track-meta {
+  color: #777;
+  font-size: 12px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-status { width: 110px; }
+.col-score  { width: 70px; color: #888; font-variant-numeric: tabular-nums; }
+.col-dur    { width: 60px; color: #888; font-variant-numeric: tabular-nums; }
+.col-copy   { width: 70px; text-align: right; }
+
+.copy-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #888;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.1s;
+}
+
+.copy-btn:hover {
+  background: #2a2a2a;
+  color: #ddd;
+  border-color: #444;
+}
+
+.copy-btn.copied {
+  background: #1f3a25;
+  color: #6cd47e;
+  border-color: #2a5a35;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.badge.ok   { background: #1f3a25; color: #6cd47e; }
+.badge.warn { background: #3a3320; color: #f0c050; }
+.badge.miss { background: #3a2020; color: #e57373; }
+
+.compare-empty {
+  padding: 40px;
+  color: #777;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.compare-empty .muted {
+  color: #555;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.muted { color: #666; }
+
+.connect-spotify {
+  padding: 60px 40px;
+  max-width: 480px;
+}
+
+.connect-spotify h2 {
+  font-size: 18px;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.connect-spotify p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.connect-spotify button.primary {
+  background: #1db954;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.connect-spotify button.primary:hover {
+  background: #1ed760;
+}
