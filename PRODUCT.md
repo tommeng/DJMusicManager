@@ -74,10 +74,8 @@ Paste a Spotify playlist URL; the app fetches all tracks and shows which ones ar
 - Score ≥ 85 → **Match**; 70–84 → **Uncertain** (likely a match worth verifying); <70 → **Missing**
 
 **Technical Notes**
-- Uses the [`spotipy`](https://github.com/spotipy-dev/spotipy) library with the OAuth **Authorization Code flow** (Spotify deprecated Client Credentials access to the playlist items endpoint for new apps in late 2024)
-- On first use, the user clicks **Connect Spotify** to authorize once; the access/refresh token is cached locally in `backend/.spotify_token`
-- Spotify app credentials are loaded from `backend/.env` (`SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`)
-- Redirect URI is `http://127.0.0.1:8000/callback` and must match what's registered in the Spotify Developer Dashboard
-- New Spotify apps are in Development Mode (25-user limit); the app owner's account works automatically, other users must be added in the dashboard
-- Spotify-owned editorial playlists (IDs starting with `37i9dQZF1...`) remain inaccessible regardless of flow
+- Reads the playlist from Spotify's **public embed page** (`backend/spotify_embed.py`, the same source as Top Charts) by parsing its `__NEXT_DATA__` JSON. No OAuth, no credentials, no login.
+- Works on **any public playlist** — your own, other users', and Spotify-owned editorial playlists (`37i9dQZF1...`), which the Web API blocks.
+- The embed payload has no album or track duration, so those columns are blank in the Compare table (titles, artists, and Spotify track links are present).
+- Private playlists aren't readable (the embed page only serves public ones).
 - Matches against the full Rekordbox collection (deduplicated), not the currently-selected playlist

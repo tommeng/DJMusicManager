@@ -5,13 +5,13 @@ A locally-run web app for managing the music you DJ with. It reads your
 
 - **Browse playlists** — navigate your Rekordbox folder/playlist tree and view tracks (title, artist, BPM, key, duration, file path).
 - **Search your library** — fast substring search across title, artist, and album.
-- **Compare against a Spotify playlist** — paste a Spotify playlist URL and see which tracks are *missing* from your Rekordbox collection, using fuzzy matching that ignores `(feat. …)`, remix/version tags, etc.
+- **Compare against a Spotify playlist** — paste any public Spotify playlist URL (your own, someone else's, or a Spotify editorial playlist) and see which tracks are *missing* from your Rekordbox collection, using fuzzy matching that ignores `(feat. …)`, remix/version tags, etc. No Spotify login required.
 - **Top Charts** — pull the current Apple Music "Top Songs" or Spotify "Today's Top Hits" chart and see at a glance which trending tracks are already in your library, *uncertain*, or *missing* — with genre tags and one-click copy. No Spotify login required.
 
 Everything runs on your own machine. Nothing about your library is uploaded
-anywhere — the app reads your local Rekordbox database and, to fetch charts,
-makes read-only requests to public endpoints (Apple Music's RSS feed, the
-iTunes Search API, and Spotify's public embed/Web API).
+anywhere — the app reads your local Rekordbox database and, to fetch playlists
+and charts, makes read-only requests to public endpoints (Apple Music's RSS
+feed, the iTunes Search API, and Spotify's public embed page).
 
 ---
 
@@ -21,7 +21,8 @@ iTunes Search API, and Spotify's public embed/Web API).
 - **Python 3.9+**
 - **Node.js 18+** (for the frontend / Vite)
 - **Rekordbox 6 or 7** installed, with a library you've used at least once.
-- *(Optional, for the Spotify Compare feature)* a free [Spotify Developer](https://developer.spotify.com/dashboard) account.
+
+No Spotify account or API credentials are needed — playlists and charts are read from public endpoints.
 
 ---
 
@@ -38,8 +39,7 @@ both servers (Ctrl-C stops them):
 ./dev.sh
 ```
 
-> Still quit Rekordbox first (it locks the database), and set up `backend/.env`
-> if you want the Spotify Compare feature — see below.
+> Still quit Rekordbox first (it locks the database).
 
 To run the two parts manually (or on Windows), open two terminals and follow
 the steps below.
@@ -106,55 +106,25 @@ npm run dev
 Open the URL Vite prints (default <http://localhost:5173>). The frontend proxies
 `/api` calls to the backend on port 8000, so no extra config is needed.
 
-At this point **playlist browsing and search work**. The Spotify Compare tab
-needs the extra setup below.
+At this point **everything works** — no Spotify setup required. The Compare and
+Top Charts tabs read Spotify playlists from the public embed page, so any public
+playlist (yours, someone else's, or a Spotify editorial playlist) works without
+logging in.
 
----
-
-## Optional: Spotify Compare setup
-
-The Compare feature needs your own Spotify app credentials (Spotify deprecated
-anonymous access to playlist contents for new apps).
-
-1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and **Create app**.
-2. In the app settings, add this **Redirect URI** exactly:
-   ```
-   http://127.0.0.1:8000/callback
-   ```
-3. Copy your **Client ID** and **Client Secret**.
-4. Create `backend/.env` (copy the template):
-   ```bash
-   cd backend
-   cp .env.example .env
-   ```
-   Then fill it in:
-   ```
-   SPOTIFY_CLIENT_ID=your_client_id_here
-   SPOTIFY_CLIENT_SECRET=your_client_secret_here
-   ```
-5. Restart the backend so it picks up the new `.env`.
-6. In the app, open the **Compare** tab and click **Connect Spotify** to
-   authorize once. Your token is cached locally in `backend/.spotify_token`.
-
-### Notes on Spotify limitations
-
-- New Spotify apps start in **Development Mode** (max 25 users). Your own
-  account works immediately; to let anyone else use *your* app's credentials,
-  add their Spotify email under **Users and Access** in the dashboard.
-- Spotify's **editorial playlists** (IDs starting `37i9dQZF1…`) are not
-  accessible via the API regardless of setup — use your own/user playlists.
+> Because the embed page doesn't expose album or track duration, those two
+> columns stay blank in the Compare table.
 
 ---
 
 ## Top Charts
 
-The **Top Charts** tab (no Spotify login needed) fetches a live chart and runs
-it through the same matcher as Compare, so you can see which trending tracks
-you're missing. Pick a source from the dropdown:
+The **Top Charts** tab fetches a live chart and runs it through the same matcher
+as Compare, so you can see which trending tracks you're missing. Pick a source
+from the dropdown:
 
 - **Spotify — Today's Top Hits** — read from Spotify's public playlist embed
-  page (Spotify's Web API blocks its own editorial playlists). Genres aren't in
-  that payload, so they're looked up per-track via the iTunes Search API.
+  page. Genres aren't in that payload, so they're looked up per-track via the
+  iTunes Search API.
 - **Apple Music — Top Songs** — Apple's daily "most-played" RSS feed, which
   already includes genre tags.
 
@@ -183,16 +153,15 @@ Both features share the same matcher (`backend/matching.py`):
 | `Could not unlock database: 'sqlcipher3' package not found` | SQLCipher didn't install. Re-run `pip install -r requirements.txt`, or build it with `python -m pyrekordbox install-sqlcipher`. |
 | `Could not open Rekordbox database` | Wrong path — set `REKORDBOX_DB` to your `master.db`, or you're on an unsupported Rekordbox version. |
 | Empty playlist tree | You may have only smart playlists (currently skipped) or an empty library. |
-| Compare says credentials missing | `backend/.env` is absent or not filled in; restart the backend after creating it. |
-| Spotify auth fails / redirect error | The Redirect URI in the dashboard must be exactly `http://127.0.0.1:8000/callback`. |
+| Compare returns nothing / errors | The playlist must be **public** (private playlists aren't readable via the embed page). Double-check the URL. |
 | Edited your library in Rekordbox | Quit Rekordbox, then hit the ↻ refresh button in the Playlists header (no restart needed). |
 
 ---
 
 ## Security / privacy
 
-- Your Spotify credentials live only in `backend/.env`, and your Spotify token
-  in `backend/.spotify_token`. Both are git-ignored and never leave your machine.
+- No Spotify credentials or login are involved — playlists and charts are read
+  from public endpoints with anonymous read-only requests.
 - The app reads your Rekordbox database **read-only** and makes no changes to it.
 
 ---
@@ -203,10 +172,9 @@ Both features share the same matcher (`backend/matching.py`):
 backend/    FastAPI app — Rekordbox parsing (pyrekordbox) + chart sources
   main.py             API endpoints
   rekordbox_parser.py reads master.db
-  spotify_compare.py  Spotify playlist fetch (spotipy) for the Compare tab
   matching.py         shared fuzzy matcher (Compare + Top Charts)
+  spotify_embed.py    reads any public Spotify playlist via the embed page (Compare + Top Charts)
   top_charts.py       Apple Music "Top Songs" RSS chart source
-  spotify_embed.py    Spotify "Today's Top Hits" via the public embed page
   itunes_genre.py     genre lookup via the iTunes Search API
 frontend/   React + Vite UI (Tailwind v4 + shadcn/ui)
   src/App.jsx, src/components/*

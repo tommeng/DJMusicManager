@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { ExternalLink, Music2 } from 'lucide-react'
+import { useState } from 'react'
+import { ExternalLink } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,39 +17,12 @@ function formatDuration(ms) {
 }
 
 export default function ComparePage() {
-  const [authStatus, setAuthStatus] = useState({ configured: false, authenticated: false })
   const [url, setUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
   const [filter, setFilter] = useState('missing')
   const [copiedId, setCopiedId] = useState(null)
-
-  const refreshAuth = () => {
-    fetch('/api/status').then(r => r.json()).then(s => {
-      setAuthStatus({
-        configured: s.spotify_configured,
-        authenticated: s.spotify_authenticated,
-      })
-    })
-  }
-
-  useEffect(() => {
-    refreshAuth()
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('spotify_connected') || params.get('spotify_error')) {
-      if (params.get('spotify_error')) {
-        setError(`Spotify auth failed: ${params.get('spotify_error')}`)
-      }
-      window.history.replaceState({}, '', '/')
-    }
-  }, [])
-
-  const connect = async () => {
-    const r = await fetch('/api/spotify/auth-url')
-    const { url } = await r.json()
-    window.location.href = url
-  }
 
   const runCompare = async () => {
     if (!url.trim()) return
@@ -81,46 +54,6 @@ export default function ComparePage() {
     return true
   }) || []
 
-  if (!authStatus.configured) {
-    return (
-      <main className="flex flex-1 flex-col overflow-hidden">
-        <div className="max-w-xl p-10 text-sm leading-relaxed">
-          <strong className="mb-2 block text-[15px] text-destructive">
-            Spotify credentials missing
-          </strong>
-          <p className="mt-2 rounded-md border-l-2 border-border bg-card px-4 py-3 text-[13px] text-muted-foreground">
-            Add{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">SPOTIFY_CLIENT_ID</code>{' '}
-            and{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">SPOTIFY_CLIENT_SECRET</code>{' '}
-            to{' '}
-            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">backend/.env</code>{' '}
-            and restart the backend.
-          </p>
-        </div>
-      </main>
-    )
-  }
-
-  if (!authStatus.authenticated) {
-    return (
-      <main className="flex flex-1 flex-col overflow-hidden">
-        <div className="max-w-md p-12">
-          <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-[#1db954]/15 text-[#1db954]">
-            <Music2 className="size-5" />
-          </div>
-          <h2 className="mb-2 text-lg font-semibold">Connect Spotify</h2>
-          <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-            Spotify requires a one-time login to access playlist contents. You'll be redirected to
-            Spotify, then back to this app once you authorize.
-          </p>
-          {error && <div className="mb-4 text-sm text-destructive">{error}</div>}
-          <Button variant="spotify" size="lg" onClick={connect}>Connect Spotify</Button>
-        </div>
-      </main>
-    )
-  }
-
   return (
     <main className="flex flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 gap-2 border-b border-border px-5 py-3.5">
@@ -148,7 +81,10 @@ export default function ComparePage() {
           <div className="shrink-0 border-b border-border px-5 py-3.5">
             <div className="mb-2.5 text-sm">
               <strong className="mr-2 font-semibold">{data.playlist.name}</strong>
-              <span className="text-xs text-muted-foreground">by {data.playlist.owner}</span>
+              {data.playlist.owner && (
+                <span className="text-xs text-muted-foreground">by {data.playlist.owner}</span>
+              )}
+              <span className="text-xs text-muted-foreground">{data.playlist.track_count} tracks</span>
             </div>
             <div className="flex flex-wrap gap-2">
               <StatChip tone="missing" active={filter === 'missing'} count={data.summary.missing} label="missing" onClick={() => setFilter('missing')} />
@@ -234,7 +170,7 @@ export default function ComparePage() {
 
       {!data && !loading && !error && (
         <div className="p-10 text-sm text-muted-foreground">
-          <p>Paste a public Spotify playlist URL above to compare it against your Rekordbox library.</p>
+          <p>Paste any public Spotify playlist URL above to compare it against your Rekordbox library — your own, someone else's, or a Spotify editorial playlist. No login needed.</p>
           <p className="mt-2 text-muted-foreground/60">
             Fuzzy matching is used to handle small differences in titles, featured artist tags, remix labels, etc.
           </p>
