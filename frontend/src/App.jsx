@@ -120,7 +120,7 @@ function App() {
           <TabsList>
             <TabsTrigger value="library"><Library className="size-3.5" /> Library</TabsTrigger>
             <TabsTrigger value="compare"><GitCompareArrows className="size-3.5" /> Compare</TabsTrigger>
-            <TabsTrigger value="top100"><Flame className="size-3.5" /> Top 100</TabsTrigger>
+            <TabsTrigger value="top100"><Flame className="size-3.5" /> Top Charts</TabsTrigger>
           </TabsList>
         </Tabs>
       </header>
