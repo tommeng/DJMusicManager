@@ -15,6 +15,14 @@ EMBED_URL = "https://open.spotify.com/embed/playlist/{playlist_id}"
 _NEXT_DATA_RE = re.compile(
     r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', re.S
 )
+_PLAYLIST_ID_RE = re.compile(r"(?:playlist[:/])([a-zA-Z0-9]+)")
+
+
+def extract_playlist_id(url_or_uri: str) -> str:
+    m = _PLAYLIST_ID_RE.search(url_or_uri)
+    if not m:
+        raise ValueError(f"Could not extract a Spotify playlist ID from: {url_or_uri}")
+    return m.group(1)
 
 
 def fetch_playlist(playlist_id: str) -> dict:
@@ -52,6 +60,27 @@ def top_tracks(local_tracks: list, playlist_id: str) -> dict:
     return {
         "source": chart["source"],
         "country": "",
+        "summary": matched["summary"],
+        "results": matched["results"],
+    }
+
+
+def compare(playlist_url: str, local_tracks: list) -> dict:
+    """Compare any public Spotify playlist against the local library.
+
+    Reads the playlist from the public embed page (no auth), so it works on
+    editorial and other users' playlists alike. The embed payload has no album
+    or duration, so those Compare columns stay blank."""
+    playlist_id = extract_playlist_id(playlist_url)
+    playlist = fetch_playlist(playlist_id)
+    matched = match_tracks(playlist["tracks"], local_tracks)
+    return {
+        "playlist": {
+            "id": playlist_id,
+            "name": playlist["source"],
+            "owner": "",
+            "track_count": len(playlist["tracks"]),
+        },
         "summary": matched["summary"],
         "results": matched["results"],
     }

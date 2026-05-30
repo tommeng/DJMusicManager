@@ -5,13 +5,11 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 load_dotenv()
 
 from rekordbox_parser import RekordboxLibrary
-from spotify_compare import SpotifyCompare
 import top_charts
 import spotify_embed
 
@@ -23,7 +21,6 @@ CHART_SOURCES = {
     "apple-top-songs": lambda lib: top_charts.top_tracks(lib),
     "spotify-todays-top-hits": lambda lib: spotify_embed.top_tracks(lib, SPOTIFY_TODAYS_TOP_HITS),
 }
-spotify = SpotifyCompare()
 load_error: Optional[str] = None
 
 
@@ -54,30 +51,8 @@ def status():
     return {
         "loaded": library.loaded,
         "error": load_error,
-        "spotify_configured": spotify.configured,
-        "spotify_authenticated": spotify.authenticated,
         "track_count": len(library.all_tracks),
     }
-
-
-@app.get("/api/spotify/auth-url")
-def spotify_auth_url():
-    if not spotify.configured:
-        raise HTTPException(503, "Spotify credentials missing in backend/.env")
-    return {"url": spotify.get_auth_url()}
-
-
-@app.get("/callback")
-def spotify_callback(code: str = None, error: str = None):
-    if error:
-        return RedirectResponse(f"http://localhost:5173/?spotify_error={error}")
-    if not code:
-        raise HTTPException(400, "Missing 'code' query parameter")
-    try:
-        spotify.handle_callback(code)
-    except Exception as e:
-        return RedirectResponse(f"http://localhost:5173/?spotify_error={e}")
-    return RedirectResponse("http://localhost:5173/?spotify_connected=1")
 
 
 @app.post("/api/library/refresh")
@@ -139,20 +114,14 @@ class CompareRequest(BaseModel):
 
 @app.post("/api/spotify/compare")
 def spotify_compare(req: CompareRequest):
+    """Compare any public Spotify playlist against the local library.
+
+    Reads the playlist from the public embed page (same source as Top Charts),
+    so no Spotify login is needed and editorial / other users' playlists work."""
     if not library.loaded:
         raise HTTPException(status_code=503, detail="Library not loaded")
-    if not spotify.configured:
-        raise HTTPException(
-            status_code=503,
-            detail="Spotify credentials missing. Set SPOTIFY_CLIENT_ID/SECRET in backend/.env and restart.",
-        )
-    if not spotify.authenticated:
-        raise HTTPException(
-            status_code=401,
-            detail="Not connected to Spotify. Click 'Connect Spotify' first.",
-        )
     try:
-        return spotify.compare(req.playlist_url, library.all_tracks)
+        return spotify_embed.compare(req.playlist_url, library.all_tracks)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
