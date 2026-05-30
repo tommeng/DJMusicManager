@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
+import { Disc3, Library, GitCompareArrows, Flame } from 'lucide-react'
 import PlaylistPanel from './components/PlaylistPanel'
 import TrackPanel from './components/TrackPanel'
 import ComparePage from './components/ComparePage'
 import TopTracksPage from './components/TopTracksPage'
-import './App.css'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 function App() {
   const [view, setView] = useState('library')
@@ -107,36 +108,42 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>DJ Music Manager</h1>
-        <nav className="app-nav">
-          <button
-            className={view === 'library' ? 'active' : ''}
-            onClick={() => setView('library')}
-          >Library</button>
-          <button
-            className={view === 'compare' ? 'active' : ''}
-            onClick={() => setView('compare')}
-          >Compare</button>
-          <button
-            className={view === 'top100' ? 'active' : ''}
-            onClick={() => setView('top100')}
-          >Top 100</button>
-        </nav>
+    <div className="flex h-full flex-col">
+      <header className="flex h-14 shrink-0 items-center gap-6 border-b border-border bg-sidebar/60 px-5 backdrop-blur">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-7 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <Disc3 className="size-4" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">DJ Music Manager</span>
+        </div>
+        <Tabs value={view} onValueChange={setView}>
+          <TabsList>
+            <TabsTrigger value="library"><Library className="size-3.5" /> Library</TabsTrigger>
+            <TabsTrigger value="compare"><GitCompareArrows className="size-3.5" /> Compare</TabsTrigger>
+            <TabsTrigger value="top100"><Flame className="size-3.5" /> Top 100</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </header>
-      <div className="app-body">
+
+      <div className="flex flex-1 overflow-hidden">
         {view === 'library' && (
           <>
-            {loading && <div className="status">Loading library...</div>}
+            {loading && (
+              <div className="p-10 text-sm text-muted-foreground">Loading library…</div>
+            )}
             {error && (
-              <div className="status error">
-                <strong>Could not load Rekordbox library</strong>
-                <p>{error}</p>
-                <p className="hint">
-                  Make sure Rekordbox is <strong>closed</strong> (the database is locked while it's running),
-                  then restart the backend. If the encryption key is missing, run{' '}
-                  <code>python -m pyrekordbox download-key</code> once from the backend venv.
+              <div className="max-w-xl p-10 text-sm leading-relaxed">
+                <strong className="mb-2 block text-[15px] text-destructive">
+                  Could not load Rekordbox library
+                </strong>
+                <p className="mb-1.5 text-muted-foreground">{error}</p>
+                <p className="mt-4 rounded-md border-l-2 border-border bg-card px-4 py-3 text-[13px] text-muted-foreground">
+                  Make sure Rekordbox is <strong>closed</strong> (the database is locked while it's
+                  running), then restart the backend. If the encryption key is missing, run{' '}
+                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">
+                    python -m pyrekordbox download-key
+                  </code>{' '}
+                  once from the backend venv.
                 </p>
               </div>
             )}

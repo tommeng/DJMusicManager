@@ -1,32 +1,19 @@
 import { useState, useEffect } from 'react'
+import { ExternalLink, Music2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@/components/ui/table'
+import StatusBadge from './StatusBadge'
+import CopyButton from './CopyButton'
+import StatChip from './StatChip'
 
 function formatDuration(ms) {
   if (!ms) return '--'
   const s = Math.floor(ms / 1000)
   const m = Math.floor(s / 60)
   return `${m}:${(s % 60).toString().padStart(2, '0')}`
-}
-
-function StatusBadge({ status }) {
-  if (status === 'match')     return <span className="badge ok">✓ Match</span>
-  if (status === 'uncertain') return <span className="badge warn">? Uncertain</span>
-  return <span className="badge miss">✗ Missing</span>
-}
-
-function CopyButton({ text, isCopied, onCopy }) {
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      onCopy()
-    } catch (e) {
-      console.error('Copy failed', e)
-    }
-  }
-  return (
-    <button className={`copy-btn ${isCopied ? 'copied' : ''}`} onClick={copy} title={`Copy: ${text}`}>
-      {isCopied ? 'Copied' : 'Copy'}
-    </button>
-  )
 }
 
 export default function ComparePage() {
@@ -49,7 +36,6 @@ export default function ComparePage() {
 
   useEffect(() => {
     refreshAuth()
-    // Handle redirect from /callback
     const params = new URLSearchParams(window.location.search)
     if (params.get('spotify_connected') || params.get('spotify_error')) {
       if (params.get('spotify_error')) {
@@ -97,12 +83,19 @@ export default function ComparePage() {
 
   if (!authStatus.configured) {
     return (
-      <main className="compare-page">
-        <div className="status error">
-          <strong>Spotify credentials missing</strong>
-          <p className="hint">
-            Add <code>SPOTIFY_CLIENT_ID</code> and <code>SPOTIFY_CLIENT_SECRET</code> to{' '}
-            <code>backend/.env</code> and restart the backend.
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <div className="max-w-xl p-10 text-sm leading-relaxed">
+          <strong className="mb-2 block text-[15px] text-destructive">
+            Spotify credentials missing
+          </strong>
+          <p className="mt-2 rounded-md border-l-2 border-border bg-card px-4 py-3 text-[13px] text-muted-foreground">
+            Add{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">SPOTIFY_CLIENT_ID</code>{' '}
+            and{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">SPOTIFY_CLIENT_SECRET</code>{' '}
+            to{' '}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">backend/.env</code>{' '}
+            and restart the backend.
           </p>
         </div>
       </main>
@@ -111,137 +104,140 @@ export default function ComparePage() {
 
   if (!authStatus.authenticated) {
     return (
-      <main className="compare-page">
-        <div className="connect-spotify">
-          <h2>Connect Spotify</h2>
-          <p className="muted">
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <div className="max-w-md p-12">
+          <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-[#1db954]/15 text-[#1db954]">
+            <Music2 className="size-5" />
+          </div>
+          <h2 className="mb-2 text-lg font-semibold">Connect Spotify</h2>
+          <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
             Spotify requires a one-time login to access playlist contents. You'll be redirected to
             Spotify, then back to this app once you authorize.
           </p>
-          {error && <div className="status error" style={{padding:0, marginBottom:16}}>{error}</div>}
-          <button className="primary" onClick={connect}>Connect Spotify</button>
+          {error && <div className="mb-4 text-sm text-destructive">{error}</div>}
+          <Button variant="spotify" size="lg" onClick={connect}>Connect Spotify</Button>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="compare-page">
-      <div className="compare-input">
-        <input
+    <main className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 gap-2 border-b border-border px-5 py-3.5">
+        <Input
           type="text"
-          placeholder="Paste a Spotify playlist URL (e.g. https://open.spotify.com/playlist/...)"
+          placeholder="Paste a Spotify playlist URL (e.g. https://open.spotify.com/playlist/…)"
           value={url}
           onChange={e => setUrl(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && runCompare()}
           disabled={loading}
         />
-        <button onClick={runCompare} disabled={loading || !url.trim()}>
+        <Button onClick={runCompare} disabled={loading || !url.trim()}>
           {loading ? 'Comparing…' : 'Compare'}
-        </button>
+        </Button>
       </div>
 
-      {error && <div className="status error"><strong>Error:</strong> {error}</div>}
+      {error && (
+        <div className="border-b border-border px-5 py-3 text-sm text-destructive">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
       {data && (
         <>
-          <div className="compare-summary">
-            <div className="summary-title">
-              <strong>{data.playlist.name}</strong>
-              <span className="muted">by {data.playlist.owner}</span>
+          <div className="shrink-0 border-b border-border px-5 py-3.5">
+            <div className="mb-2.5 text-sm">
+              <strong className="mr-2 font-semibold">{data.playlist.name}</strong>
+              <span className="text-xs text-muted-foreground">by {data.playlist.owner}</span>
             </div>
-            <div className="summary-stats">
-              <button className={`stat miss ${filter==='missing'?'active':''}`} onClick={()=>setFilter('missing')}>
-                <span className="stat-n">{data.summary.missing}</span> missing
-              </button>
-              <button className={`stat warn ${filter==='uncertain'?'active':''}`} onClick={()=>setFilter('uncertain')}>
-                <span className="stat-n">{data.summary.uncertain}</span> uncertain
-              </button>
-              <button className={`stat ok ${filter==='match'?'active':''}`} onClick={()=>setFilter('match')}>
-                <span className="stat-n">{data.summary.match}</span> in library
-              </button>
-              <button className={`stat ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>
-                <span className="stat-n">{data.summary.total}</span> total
-              </button>
+            <div className="flex flex-wrap gap-2">
+              <StatChip tone="missing" active={filter === 'missing'} count={data.summary.missing} label="missing" onClick={() => setFilter('missing')} />
+              <StatChip tone="uncertain" active={filter === 'uncertain'} count={data.summary.uncertain} label="uncertain" onClick={() => setFilter('uncertain')} />
+              <StatChip tone="match" active={filter === 'match'} count={data.summary.match} label="in library" onClick={() => setFilter('match')} />
+              <StatChip tone="all" active={filter === 'all'} count={data.summary.total} label="total" onClick={() => setFilter('all')} />
             </div>
           </div>
 
-          {filteredResults.length === 0 && (
-            <div className="compare-empty">
+          {filteredResults.length === 0 ? (
+            <div className="p-10 text-sm text-muted-foreground">
               {filter === 'missing' && <p>Nothing missing — every track in this playlist is already in your library.</p>}
               {filter === 'uncertain' && <p>No uncertain matches.</p>}
               {filter === 'match' && <p>No matched tracks.</p>}
               {filter === 'all' && <p>Playlist is empty.</p>}
             </div>
-          )}
-          {filteredResults.length > 0 && (
-          <div className="compare-table-container">
-            <table className="compare-table">
-              <thead>
-                <tr>
-                  <th className="col-status">Status</th>
-                  <th>Spotify Track</th>
-                  <th>Match in Library</th>
-                  <th className="col-score">Score</th>
-                  <th className="col-dur">Dur</th>
-                  <th className="col-copy"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredResults.map((r, i) => (
-                  <tr key={r.track.id || i}>
-                    <td className="col-status">
-                      <StatusBadge status={r.match?.status || 'missing'} />
-                    </td>
-                    <td>
-                      <a
-                        className="track-title-link"
-                        href={r.track.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open in Spotify"
-                      >
-                        {r.track.title}
-                      </a>
-                      <div className="track-meta">
-                        {r.track.artist}
-                        {r.track.album && <> · <span className="album">{r.track.album}</span></>}
-                      </div>
-                    </td>
-                    <td>
-                      {r.match ? (
-                        <>
-                          <div className="track-title">{r.match.local_track.title}</div>
-                          <div className="track-meta">{r.match.local_track.artist}</div>
-                        </>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                    <td className="col-score">
-                      {r.match ? `${r.match.score}%` : '—'}
-                    </td>
-                    <td className="col-dur">{formatDuration(r.track.duration_ms)}</td>
-                    <td className="col-copy">
-                      <CopyButton
-                        text={`${r.track.title} ${r.track.artist}`}
-                        isCopied={copiedId === r.track.id}
-                        onCopy={() => setCopiedId(r.track.id)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-28">Status</TableHead>
+                    <TableHead>Spotify Track</TableHead>
+                    <TableHead>Match in Library</TableHead>
+                    <TableHead className="w-16 text-right">Score</TableHead>
+                    <TableHead className="w-16 text-right">Dur</TableHead>
+                    <TableHead className="w-20" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredResults.map((r, i) => (
+                    <TableRow key={r.track.id || i}>
+                      <TableCell className="align-top">
+                        <StatusBadge status={r.match?.status || 'missing'} />
+                      </TableCell>
+                      <TableCell className="max-w-0 align-top">
+                        <a
+                          className="group/link flex items-center gap-1 truncate text-foreground/90 hover:text-[#1db954]"
+                          href={r.track.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open in Spotify"
+                        >
+                          <span className="truncate">{r.track.title}</span>
+                          <ExternalLink className="size-3 shrink-0 opacity-0 transition-opacity group-hover/link:opacity-100" />
+                        </a>
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                          {r.track.artist}
+                          {r.track.album && <> · <span className="text-muted-foreground/60">{r.track.album}</span></>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-0 align-top">
+                        {r.match ? (
+                          <>
+                            <div className="truncate text-foreground/90">{r.match.local_track.title}</div>
+                            <div className="mt-0.5 truncate text-xs text-muted-foreground">{r.match.local_track.artist}</div>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right align-top tabular-nums text-muted-foreground">
+                        {r.match ? `${r.match.score}%` : '—'}
+                      </TableCell>
+                      <TableCell className="text-right align-top tabular-nums text-muted-foreground">
+                        {formatDuration(r.track.duration_ms)}
+                      </TableCell>
+                      <TableCell className="text-right align-top">
+                        <CopyButton
+                          text={`${r.track.title} ${r.track.artist}`}
+                          isCopied={copiedId === r.track.id}
+                          onCopy={() => setCopiedId(r.track.id)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </>
       )}
 
       {!data && !loading && !error && (
-        <div className="compare-empty">
+        <div className="p-10 text-sm text-muted-foreground">
           <p>Paste a public Spotify playlist URL above to compare it against your Rekordbox library.</p>
-          <p className="muted">Fuzzy matching is used to handle small differences in titles, featured artist tags, remix labels, etc.</p>
+          <p className="mt-2 text-muted-foreground/60">
+            Fuzzy matching is used to handle small differences in titles, featured artist tags, remix labels, etc.
+          </p>
         </div>
       )}
     </main>
