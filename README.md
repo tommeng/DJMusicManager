@@ -30,7 +30,7 @@ The app has two parts that run at the same time: a **backend** (FastAPI, port
 ### 1. Clone
 
 ```bash
-git clone <your-repo-url> DJMusicManager
+git clone git@github.com:tommeng/DJMusicManager.git
 cd DJMusicManager
 ```
 
