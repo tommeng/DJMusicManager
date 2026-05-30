@@ -6,9 +6,12 @@ A locally-run web app for managing the music you DJ with. It reads your
 - **Browse playlists** — navigate your Rekordbox folder/playlist tree and view tracks (title, artist, BPM, key, duration, file path).
 - **Search your library** — fast substring search across title, artist, and album.
 - **Compare against a Spotify playlist** — paste a Spotify playlist URL and see which tracks are *missing* from your Rekordbox collection, using fuzzy matching that ignores `(feat. …)`, remix/version tags, etc.
+- **Top Charts** — pull the current Apple Music "Top Songs" or Spotify "Today's Top Hits" chart and see at a glance which trending tracks are already in your library, *uncertain*, or *missing* — with genre tags and one-click copy. No Spotify login required.
 
-Everything runs on your own machine. Nothing is uploaded anywhere — the app
-talks only to your local Rekordbox database and (optionally) the Spotify API.
+Everything runs on your own machine. Nothing about your library is uploaded
+anywhere — the app reads your local Rekordbox database and, to fetch charts,
+makes read-only requests to public endpoints (Apple Music's RSS feed, the
+iTunes Search API, and Spotify's public embed/Web API).
 
 ---
 
@@ -143,14 +146,32 @@ anonymous access to playlist contents for new apps).
 
 ---
 
-## How matching works (Compare)
+## Top Charts
 
-- Each track title is normalized: lowercased, with `(feat. …)`,
-  `(Remastered …)`, `- Extended Mix`, etc. stripped.
-- Normalized `artist + title` is fuzzy-matched against your whole Rekordbox
-  collection using `rapidfuzz`'s order-insensitive `token_set_ratio`.
-- Score **≥ 85** → match (in library); **70–84** → *Uncertain* (worth a manual
-  check); **< 70** → *Missing*.
+The **Top Charts** tab (no Spotify login needed) fetches a live chart and runs
+it through the same matcher as Compare, so you can see which trending tracks
+you're missing. Pick a source from the dropdown:
+
+- **Spotify — Today's Top Hits** — read from Spotify's public playlist embed
+  page (Spotify's Web API blocks its own editorial playlists). Genres aren't in
+  that payload, so they're looked up per-track via the iTunes Search API.
+- **Apple Music — Top Songs** — Apple's daily "most-played" RSS feed, which
+  already includes genre tags.
+
+Results are tagged **In library / Maybe / Missing** (same thresholds as below),
+with clickable stat chips to filter and a copy button per row.
+
+## How matching works (Compare & Top Charts)
+
+Both features share the same matcher (`backend/matching.py`):
+
+- Each title and artist is normalized: lowercased, with `(feat. …)`,
+  `(Remastered …)`, `- Extended Mix`, and other version/qualifier tags stripped.
+- Artist and title are fuzzy-scored **separately** against your whole Rekordbox
+  collection with `rapidfuzz`'s order-insensitive `token_set_ratio`, then
+  combined by taking the lower of the two — a track must match well on *both*.
+- Combined score **≥ 85** → match (in library); **70–84** → *Uncertain* (worth a
+  manual check); **< 70** → *Missing*.
 
 ---
 
@@ -179,10 +200,14 @@ anonymous access to playlist contents for new apps).
 ## Project layout
 
 ```
-backend/    FastAPI app — Rekordbox parsing (pyrekordbox) + Spotify compare (spotipy)
+backend/    FastAPI app — Rekordbox parsing (pyrekordbox) + chart sources
   main.py             API endpoints
   rekordbox_parser.py reads master.db
-  spotify_compare.py  Spotify fetch + fuzzy matching
-frontend/   React + Vite UI
+  spotify_compare.py  Spotify playlist fetch (spotipy) for the Compare tab
+  matching.py         shared fuzzy matcher (Compare + Top Charts)
+  top_charts.py       Apple Music "Top Songs" RSS chart source
+  spotify_embed.py    Spotify "Today's Top Hits" via the public embed page
+  itunes_genre.py     genre lookup via the iTunes Search API
+frontend/   React + Vite UI (Tailwind v4 + shadcn/ui)
   src/App.jsx, src/components/*
 ```
