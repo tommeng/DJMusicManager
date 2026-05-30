@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import PlaylistPanel from './components/PlaylistPanel'
 import TrackPanel from './components/TrackPanel'
 import ComparePage from './components/ComparePage'
+import TopTracksPage from './components/TopTracksPage'
 import './App.css'
 
 function App() {
@@ -118,6 +119,10 @@ function App() {
             className={view === 'compare' ? 'active' : ''}
             onClick={() => setView('compare')}
           >Compare</button>
+          <button
+            className={view === 'top100' ? 'active' : ''}
+            onClick={() => setView('top100')}
+          >Top 100</button>
         </nav>
       </header>
       <div className="app-body">
@@ -153,6 +158,7 @@ function App() {
           </>
         )}
         {view === 'compare' && <ComparePage />}
+        {view === 'top100' && <TopTracksPage />}
       </div>
     </div>
   )

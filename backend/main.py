@@ -12,6 +12,7 @@ load_dotenv()
 
 from rekordbox_parser import RekordboxLibrary
 from spotify_compare import SpotifyCompare
+import top_charts
 
 library = RekordboxLibrary(os.environ.get("REKORDBOX_DB"))
 spotify = SpotifyCompare()
@@ -148,3 +149,17 @@ def spotify_compare(req: CompareRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Spotify error: {e}")
+
+
+@app.get("/api/top100")
+def top100(genre: str = ""):
+    """Current top tracks from Apple Music's iTunes Top Songs chart (optionally
+    for a single genre), matched against the local library. No Spotify auth."""
+    if not library.loaded:
+        raise HTTPException(status_code=503, detail="Library not loaded")
+    try:
+        return top_charts.top_tracks(library.all_tracks, genre=genre)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Chart source error: {e}")
