@@ -11,17 +11,9 @@ import CopyButton from './CopyButton'
 import StatChip from './StatChip'
 import { cn } from '@/lib/utils'
 
-const GENRES = [
-  { id: '', label: 'Overall' },
-  { id: '18', label: 'Hip-Hop/Rap' },
-  { id: '15', label: 'R&B/Soul' },
-  { id: '14', label: 'Pop' },
-  { id: '17', label: 'Dance' },
-  { id: '7', label: 'Electronic' },
-  { id: '24', label: 'Reggae' },
-  { id: '12', label: 'Latino' },
-  { id: '21', label: 'Rock' },
-  { id: '6', label: 'Country' },
+const SOURCES = [
+  { id: 'spotify-todays-top-hits', label: "Spotify — Today's Top Hits" },
+  { id: 'apple-top-songs', label: 'Apple Music — Top Songs' },
 ]
 
 const STATUS_LABELS = { match: 'In library', uncertain: 'Maybe', missing: 'Missing' }
@@ -31,16 +23,16 @@ export default function TopTracksPage() {
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
   const [libFilter, setLibFilter] = useState('all')
-  const [genre, setGenre] = useState('')
+  const [source, setSource] = useState(SOURCES[0].id)
   const [copiedId, setCopiedId] = useState(null)
 
-  const load = async (genreId = genre) => {
+  const load = async (sourceId = source) => {
     setLoading(true)
     setError(null)
     try {
-      const r = await fetch(`/api/top100?genre=${encodeURIComponent(genreId)}`)
+      const r = await fetch(`/api/top100?source=${encodeURIComponent(sourceId)}`)
       const json = await r.json()
-      if (!r.ok) throw new Error(json.detail || 'Failed to load Top 100')
+      if (!r.ok) throw new Error(json.detail || 'Failed to load Top Charts')
       setData(json)
     } catch (e) {
       setError(e.message)
@@ -51,9 +43,9 @@ export default function TopTracksPage() {
 
   useEffect(() => { load() }, [])
 
-  const changeGenre = (g) => {
-    setGenre(g)
-    load(g)
+  const changeSource = (s) => {
+    setSource(s)
+    load(s)
   }
 
   const filtered = data?.results.filter(r => {
@@ -66,21 +58,15 @@ export default function TopTracksPage() {
     <main className="flex flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center gap-2 border-b border-border px-5 py-3.5">
         <span className="flex-1 truncate text-xs text-muted-foreground">
-          {data ? `${data.source} — ${data.country} · updated daily` : 'Apple Music — Top Songs'}
+          {data ? [data.source, data.country].filter(Boolean).join(' — ') : 'Loading chart…'}
         </span>
-        <Select
-          value={genre || 'overall'}
-          onValueChange={v => changeGenre(v === 'overall' ? '' : v)}
-          disabled={loading}
-        >
-          <SelectTrigger size="sm" className="w-40">
+        <Select value={source} onValueChange={changeSource} disabled={loading}>
+          <SelectTrigger size="sm" className="w-52">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {GENRES.map(g => (
-              <SelectItem key={g.id || 'overall'} value={g.id || 'overall'}>
-                {g.label}
-              </SelectItem>
+            {SOURCES.map(s => (
+              <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -188,7 +174,7 @@ export default function TopTracksPage() {
       )}
 
       {!data && loading && (
-        <div className="p-10 text-sm text-muted-foreground"><p>Loading Top 100…</p></div>
+        <div className="p-10 text-sm text-muted-foreground"><p>Loading Top Charts…</p></div>
       )}
     </main>
   )

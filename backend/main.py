@@ -13,8 +13,16 @@ load_dotenv()
 from rekordbox_parser import RekordboxLibrary
 from spotify_compare import SpotifyCompare
 import top_charts
+import spotify_embed
 
 library = RekordboxLibrary(os.environ.get("REKORDBOX_DB"))
+
+# Selectable chart sources for /api/top100, keyed by the id the UI sends.
+SPOTIFY_TODAYS_TOP_HITS = "37i9dQZF1DXcBWIGoYBM5M"
+CHART_SOURCES = {
+    "apple-top-songs": lambda lib: top_charts.top_tracks(lib),
+    "spotify-todays-top-hits": lambda lib: spotify_embed.top_tracks(lib, SPOTIFY_TODAYS_TOP_HITS),
+}
 spotify = SpotifyCompare()
 load_error: Optional[str] = None
 
@@ -152,14 +160,15 @@ def spotify_compare(req: CompareRequest):
 
 
 @app.get("/api/top100")
-def top100(genre: str = ""):
-    """Current top tracks from Apple Music's iTunes Top Songs chart (optionally
-    for a single genre), matched against the local library. No Spotify auth."""
+def top100(source: str = "apple-top-songs"):
+    """Current top tracks from the selected chart source, matched against the
+    local library. No Spotify auth required."""
     if not library.loaded:
         raise HTTPException(status_code=503, detail="Library not loaded")
+    fetch = CHART_SOURCES.get(source)
+    if not fetch:
+        raise HTTPException(status_code=400, detail=f"Unknown source: {source}")
     try:
-        return top_charts.top_tracks(library.all_tracks, genre=genre)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        return fetch(library.all_tracks)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Chart source error: {e}")
