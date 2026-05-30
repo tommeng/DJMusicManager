@@ -1,4 +1,15 @@
 import { useState, useEffect } from 'react'
+import { ExternalLink, RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import {
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import StatusBadge from './StatusBadge'
+import CopyButton from './CopyButton'
+import StatChip from './StatChip'
+import { cn } from '@/lib/utils'
 
 const GENRES = [
   { id: '', label: 'Overall' },
@@ -13,27 +24,7 @@ const GENRES = [
   { id: '6', label: 'Country' },
 ]
 
-function StatusBadge({ status }) {
-  if (status === 'match')     return <span className="badge ok">✓ In library</span>
-  if (status === 'uncertain') return <span className="badge warn">? Maybe</span>
-  return <span className="badge miss">✗ Missing</span>
-}
-
-function CopyButton({ text, isCopied, onCopy }) {
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      onCopy()
-    } catch (e) {
-      console.error('Copy failed', e)
-    }
-  }
-  return (
-    <button className={`copy-btn ${isCopied ? 'copied' : ''}`} onClick={copy} title={`Copy: ${text}`}>
-      {isCopied ? 'Copied' : 'Copy'}
-    </button>
-  )
-}
+const STATUS_LABELS = { match: 'In library', uncertain: 'Maybe', missing: 'Missing' }
 
 export default function TopTracksPage() {
   const [loading, setLoading] = useState(false)
@@ -60,8 +51,7 @@ export default function TopTracksPage() {
 
   useEffect(() => { load() }, [])
 
-  const changeGenre = (e) => {
-    const g = e.target.value
+  const changeGenre = (g) => {
     setGenre(g)
     load(g)
   }
@@ -73,104 +63,133 @@ export default function TopTracksPage() {
   }) || []
 
   return (
-    <main className="compare-page">
-      <div className="compare-input">
-        <span className="muted" style={{ flex: 1 }}>
-          {data
-            ? `${data.source} — ${data.country} · updated daily`
-            : 'Apple Music — Top Songs'}
+    <main className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border px-5 py-3.5">
+        <span className="flex-1 truncate text-xs text-muted-foreground">
+          {data ? `${data.source} — ${data.country} · updated daily` : 'Apple Music — Top Songs'}
         </span>
-        <select className="genre-select" value={genre} onChange={changeGenre} disabled={loading}>
-          {GENRES.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
-        </select>
-        <button onClick={() => load()} disabled={loading}>
+        <Select
+          value={genre || 'overall'}
+          onValueChange={v => changeGenre(v === 'overall' ? '' : v)}
+          disabled={loading}
+        >
+          <SelectTrigger size="sm" className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {GENRES.map(g => (
+              <SelectItem key={g.id || 'overall'} value={g.id || 'overall'}>
+                {g.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
+          <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
           {loading ? 'Loading…' : 'Refresh'}
-        </button>
+        </Button>
       </div>
 
       {error && (
-        <div className="status error">
+        <div className="border-b border-border px-5 py-3 text-sm text-destructive">
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {data && (
         <>
-          <div className="compare-summary">
-            <div className="summary-stats">
-              <button className={`stat miss ${libFilter==='missing'?'active':''}`} onClick={()=>setLibFilter('missing')}>
-                <span className="stat-n">{data.summary.missing}</span> missing
-              </button>
-              <button className={`stat warn ${libFilter==='uncertain'?'active':''}`} onClick={()=>setLibFilter('uncertain')}>
-                <span className="stat-n">{data.summary.uncertain}</span> maybe
-              </button>
-              <button className={`stat ok ${libFilter==='match'?'active':''}`} onClick={()=>setLibFilter('match')}>
-                <span className="stat-n">{data.summary.match}</span> in library
-              </button>
-              <button className={`stat ${libFilter==='all'?'active':''}`} onClick={()=>setLibFilter('all')}>
-                <span className="stat-n">{data.summary.total}</span> total
-              </button>
+          <div className="shrink-0 border-b border-border px-5 py-3.5">
+            <div className="flex flex-wrap gap-2">
+              <StatChip tone="missing" active={libFilter === 'missing'} count={data.summary.missing} label="missing" onClick={() => setLibFilter('missing')} />
+              <StatChip tone="uncertain" active={libFilter === 'uncertain'} count={data.summary.uncertain} label="maybe" onClick={() => setLibFilter('uncertain')} />
+              <StatChip tone="match" active={libFilter === 'match'} count={data.summary.match} label="in library" onClick={() => setLibFilter('match')} />
+              <StatChip tone="all" active={libFilter === 'all'} count={data.summary.total} label="total" onClick={() => setLibFilter('all')} />
             </div>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="compare-empty"><p>No tracks match the current filter.</p></div>
+            <div className="p-10 text-sm text-muted-foreground">
+              <p>No tracks match the current filter.</p>
+            </div>
           ) : (
-            <div className="compare-table-container">
-              <table className="compare-table">
-                <thead>
-                  <tr>
-                    <th className="col-num">#</th>
-                    <th className="col-status">Status</th>
-                    <th>Track</th>
-                    <th>Genre</th>
-                    <th>Match in Library</th>
-                    <th className="col-score">Score</th>
-                    <th className="col-copy"></th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="flex-1 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-12 text-right">#</TableHead>
+                    <TableHead className="w-28">Status</TableHead>
+                    <TableHead>Track</TableHead>
+                    <TableHead className="w-44">Genre</TableHead>
+                    <TableHead>Match in Library</TableHead>
+                    <TableHead className="w-16 text-right">Score</TableHead>
+                    <TableHead className="w-20" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filtered.map((r, i) => (
-                    <tr key={r.track.id || i}>
-                      <td className="col-num">{r.track.rank}</td>
-                      <td className="col-status"><StatusBadge status={r.match?.status || 'missing'} /></td>
-                      <td>
-                        <a className="track-title-link" href={r.track.url} target="_blank" rel="noopener noreferrer" title="Open in Apple Music">
-                          {r.track.title}
+                    <TableRow key={r.track.id || i}>
+                      <TableCell className="text-right align-top tabular-nums text-muted-foreground/60">
+                        {r.track.rank}
+                      </TableCell>
+                      <TableCell className="align-top">
+                        <StatusBadge status={r.match?.status || 'missing'} labels={STATUS_LABELS} />
+                      </TableCell>
+                      <TableCell className="max-w-0 align-top">
+                        <a
+                          className="group/link flex items-center gap-1 truncate text-foreground/90 hover:text-[#1db954]"
+                          href={r.track.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Open in Apple Music"
+                        >
+                          <span className="truncate">{r.track.title}</span>
+                          <ExternalLink className="size-3 shrink-0 opacity-0 transition-opacity group-hover/link:opacity-100" />
                         </a>
-                        <div className="track-meta">{r.track.artist}</div>
-                      </td>
-                      <td>
-                        {(r.track.genres || []).length > 0
-                          ? r.track.genres.map(g => <span key={g} className="genre-tag">{g}</span>)
-                          : <span className="muted">—</span>}
-                      </td>
-                      <td>
+                        <div className="mt-0.5 truncate text-xs text-muted-foreground">{r.track.artist}</div>
+                      </TableCell>
+                      <TableCell className="align-top">
+                        {(r.track.genres || []).length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {r.track.genres.map(g => (
+                              <Badge key={g} variant="secondary" className="font-normal">{g}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-0 align-top">
                         {r.match ? (
                           <>
-                            <div className="track-title">{r.match.local_track.title}</div>
-                            <div className="track-meta">{r.match.local_track.artist}</div>
+                            <div className="truncate text-foreground/90">{r.match.local_track.title}</div>
+                            <div className="mt-0.5 truncate text-xs text-muted-foreground">{r.match.local_track.artist}</div>
                           </>
-                        ) : <span className="muted">—</span>}
-                      </td>
-                      <td className="col-score">{r.match ? `${r.match.score}%` : '—'}</td>
-                      <td className="col-copy">
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right align-top tabular-nums text-muted-foreground">
+                        {r.match ? `${r.match.score}%` : '—'}
+                      </TableCell>
+                      <TableCell className="text-right align-top">
                         <CopyButton
                           text={`${r.track.title} ${r.track.artist}`}
                           isCopied={copiedId === r.track.id}
                           onCopy={() => setCopiedId(r.track.id)}
                         />
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </>
       )}
 
-      {!data && loading && <div className="compare-empty"><p>Loading Top 100…</p></div>}
+      {!data && loading && (
+        <div className="p-10 text-sm text-muted-foreground"><p>Loading Top 100…</p></div>
+      )}
     </main>
   )
 }
