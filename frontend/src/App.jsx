@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Disc3, Library, GitCompareArrows, Flame } from 'lucide-react'
 import PlaylistPanel from './components/PlaylistPanel'
 import TrackPanel from './components/TrackPanel'
+import AnalysisPanel from './components/AnalysisPanel'
 import ComparePage from './components/ComparePage'
 import TopTracksPage from './components/TopTracksPage'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -21,6 +22,10 @@ function App() {
 
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState(null)
+
+  // AI analysis, cached per playlist id: { [id]: { status, data, error } }
+  const [analyses, setAnalyses] = useState({})
+  const [analysisOpen, setAnalysisOpen] = useState(false)
 
   useEffect(() => {
     fetch('/api/playlists')
@@ -86,10 +91,29 @@ function App() {
     setSearchQuery('')
     setSelected(playlist)
     setTracks([])
+    setAnalysisOpen(false)
     fetch(`/api/playlists/${playlist.id}/tracks`)
       .then(r => r.json())
       .then(setTracks)
       .catch(console.error)
+  }
+
+  const analyzeSelected = () => {
+    if (!selected) return
+    const { id } = selected
+    setAnalysisOpen(true)
+    // Cached result — just reopen the panel, no refetch.
+    if (analyses[id]?.status === 'done') return
+
+    setAnalyses(prev => ({ ...prev, [id]: { status: 'loading' } }))
+    fetch(`/api/playlists/${id}/analyze`, { method: 'POST' })
+      .then(async r => {
+        const data = await r.json()
+        if (!r.ok) throw new Error(data.detail || 'Analysis failed')
+        return data
+      })
+      .then(data => setAnalyses(prev => ({ ...prev, [id]: { status: 'done', data } })))
+      .catch(err => setAnalyses(prev => ({ ...prev, [id]: { status: 'error', error: err.message } })))
   }
 
   const renderTrackPanel = () => {
@@ -104,7 +128,25 @@ function App() {
         />
       )
     }
-    return <TrackPanel title={selected?.name} tracks={tracks} />
+    if (!selected) return <TrackPanel title={selected?.name} tracks={tracks} />
+    const analysis = analyses[selected.id]
+    return (
+      <>
+        <TrackPanel
+          title={selected.name}
+          tracks={tracks}
+          onAnalyze={analyzeSelected}
+          analyzing={analysis?.status === 'loading'}
+        />
+        {analysisOpen && (
+          <AnalysisPanel
+            playlistName={selected.name}
+            state={analysis ?? { status: 'idle' }}
+            onClose={() => setAnalysisOpen(false)}
+          />
+        )}
+      </>
+    )
   }
 
   return (

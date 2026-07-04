@@ -15,6 +15,7 @@ class RekordboxLibrary:
         self._db: Optional[Rekordbox6Database] = None
         self._tree: list = []
         self._tracks_by_playlist: dict = {}
+        self._names_by_id: dict = {}
         self._all_tracks: list = []
         self.loaded = False
         self.error: Optional[str] = None
@@ -30,6 +31,7 @@ class RekordboxLibrary:
             raise RuntimeError(f"Could not open Rekordbox database: {e}") from e
 
         self._tracks_by_playlist = {}
+        self._names_by_id = {}
         nodes: dict = {}
 
         for item in self._db.get_playlist():
@@ -52,6 +54,7 @@ class RekordboxLibrary:
                     t for t in (self._extract_track(s.Content) for s in songs) if t
                 ]
 
+            self._names_by_id[node["id"]] = node["name"]
             nodes[node["id"]] = node
 
         roots: list = []
@@ -98,6 +101,9 @@ class RekordboxLibrary:
 
     def get_playlist_tracks(self, playlist_id: str):
         return self._tracks_by_playlist.get(playlist_id)
+
+    def playlist_name(self, playlist_id: str):
+        return self._names_by_id.get(playlist_id, "Untitled")
 
 
 def _sort_tree(items):

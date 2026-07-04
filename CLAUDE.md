@@ -21,12 +21,17 @@ runs on the user's machine; nothing about the library is uploaded.
 - `backend/matching.py` — shared fuzzy matcher (Compare + Top Charts). Thresholds: ≥85 match, 70–84 uncertain, <70 missing.
 - `backend/spotify_embed.py` — reads any public Spotify playlist from the embed page's `__NEXT_DATA__` (no auth). Powers both Compare (`compare()`) and Top Charts (`top_tracks()`).
 - `backend/top_charts.py` (Apple RSS), `itunes_genre.py` — chart/genre sources.
+- `backend/ai_analysis.py` — AI playlist analysis (Library tab "AI Analyze"). Aggregates
+  BPM/genre/key stats locally, then asks Claude (Sonnet 4.6, structured output) for a
+  genre/vibe writeup. Needs `ANTHROPIC_API_KEY` in `backend/.env`. Endpoint:
+  `POST /api/playlists/{id}/analyze`. Frontend caches results per playlist in `App.jsx`.
 - `frontend/src/App.jsx` + `src/components/*`; shadcn/ui primitives in `src/components/ui/`.
 
 ## Gotchas
 - Rekordbox must be CLOSED — it locks master.db. "Library not loaded" = it's still open.
 - Compare and Top Charts both read Spotify via the embed page (no OAuth), so editorial (`37i9dQZF1…`) and other users' playlists work. The embed payload has no album/duration — those Compare columns stay blank.
 - Radix `SelectItem` must never have `value=""` — map empty ids to a sentinel (it crashes otherwise).
+- "AI Analyze" only shows for a selected playlist (not search results), and is disabled with no API key — the endpoint returns 400 with a setup message that surfaces in the panel.
 
 ## Conventions
 - Frontend: Tailwind v4 + shadcn/ui; path alias `@/`. Backend: plain modules, no package, run from `backend/`.
