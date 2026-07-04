@@ -1,7 +1,8 @@
-import { ListMusic } from 'lucide-react'
+import { ListMusic, Sparkles } from 'lucide-react'
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 
 function formatDuration(seconds) {
   if (!seconds) return '--'
@@ -10,7 +11,7 @@ function formatDuration(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
-function TrackPanel({ title, subtitle, tracks, emptyMessage }) {
+function TrackPanel({ title, subtitle, tracks, emptyMessage, onAnalyze, analyzing }) {
   if (!title) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground/50">
@@ -27,6 +28,18 @@ function TrackPanel({ title, subtitle, tracks, emptyMessage }) {
         <span className="shrink-0 text-xs text-muted-foreground">
           {subtitle ?? `${tracks.length} tracks`}
         </span>
+        {onAnalyze && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto self-center"
+            onClick={onAnalyze}
+            disabled={analyzing || tracks.length === 0}
+          >
+            <Sparkles className="size-3.5" />
+            {analyzing ? 'Analyzing…' : 'AI Analyze'}
+          </Button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto">
         <Table>

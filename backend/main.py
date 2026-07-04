@@ -12,6 +12,7 @@ load_dotenv()
 from rekordbox_parser import RekordboxLibrary
 import top_charts
 import spotify_embed
+import ai_analysis
 
 library = RekordboxLibrary(os.environ.get("REKORDBOX_DB"))
 
@@ -89,6 +90,23 @@ def get_tracks(playlist_id: str):
     if tracks is None:
         raise HTTPException(status_code=404, detail="Playlist not found")
     return tracks
+
+
+@app.post("/api/playlists/{playlist_id}/analyze")
+def analyze_playlist(playlist_id: str):
+    """AI genre/vibe analysis of a playlist. Aggregates stats locally, then
+    asks Claude for a natural-language summary. Needs ANTHROPIC_API_KEY."""
+    if not library.loaded:
+        raise HTTPException(status_code=503, detail="Library not loaded")
+    tracks = library.get_playlist_tracks(playlist_id)
+    if tracks is None:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    try:
+        return ai_analysis.analyze(library.playlist_name(playlist_id), tracks)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"AI analysis error: {e}")
 
 
 @app.get("/api/search")

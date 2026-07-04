@@ -5,4 +5,5 @@ sqlcipher3-wheels>=0.5.0  # prebuilt SQLCipher; required to read the encrypted R
 rapidfuzz>=3.5.0
 requests>=2.31.0
 python-dotenv>=1.0.0
+anthropic>=0.40.0  # AI playlist analysis (Library tab)
 pytest>=7.4.0  # dev: run `python -m pytest` for the matcher tests
