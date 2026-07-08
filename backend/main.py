@@ -109,6 +109,25 @@ def analyze_playlist(playlist_id: str):
         raise HTTPException(status_code=502, detail=f"AI analysis error: {e}")
 
 
+@app.get("/api/library/broken")
+def broken_tracks():
+    """Tracks with a missing audio file (no path stored, or the file is gone).
+    Reason is "no_file" or "file_missing" per track."""
+    if not library.loaded:
+        raise HTTPException(status_code=503, detail="Library not loaded")
+    tracks = library.broken_tracks()
+    no_file = sum(1 for t in tracks if t["broken_reason"] == "no_file")
+    return {
+        "tracks": tracks,
+        "summary": {
+            "total": len(library.all_tracks),
+            "broken": len(tracks),
+            "no_file": no_file,
+            "file_missing": len(tracks) - no_file,
+        },
+    }
+
+
 @app.get("/api/search")
 def search(q: str = "", limit: int = 500):
     if not library.loaded:
