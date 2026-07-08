@@ -17,7 +17,9 @@ runs on the user's machine; nothing about the library is uploaded.
 
 ## Architecture
 - `backend/main.py` — all FastAPI endpoints. New chart sources go in the `CHART_SOURCES` dict.
-- `backend/rekordbox_parser.py` — reads the encrypted master.db via pyrekordbox.
+- `backend/rekordbox_parser.py` — reads the encrypted master.db via pyrekordbox. Also
+  `broken_tracks()` (Health tab): flags tracks whose `FolderPath` is empty (`no_file`) or
+  points to a missing file (`file_missing`). Endpoint: `GET /api/library/broken`.
 - `backend/matching.py` — shared fuzzy matcher (Compare + Top Charts). Thresholds: ≥85 match, 70–84 uncertain, <70 missing.
 - `backend/spotify_embed.py` — reads any public Spotify playlist from the embed page's `__NEXT_DATA__` (no auth). Powers both Compare (`compare()`) and Top Charts (`top_tracks()`).
 - `backend/top_charts.py` (Apple RSS), `itunes_genre.py` — chart/genre sources.

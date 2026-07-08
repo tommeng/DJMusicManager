@@ -7,6 +7,8 @@ A locally-run web app for managing the music you DJ with. It reads your
 - **Search your library** — fast substring search across title, artist, and album.
 - **Compare against a Spotify playlist** — paste any public Spotify playlist URL (your own, someone else's, or a Spotify editorial playlist) and see which tracks are *missing* from your Rekordbox collection, using fuzzy matching that ignores `(feat. …)`, remix/version tags, etc. No Spotify login required.
 - **Top Charts** — pull the current Apple Music "Top Songs" or Spotify "Today's Top Hits" chart and see at a glance which trending tracks are already in your library, *uncertain*, or *missing* — with genre tags and one-click copy. No Spotify login required.
+- **Find broken tracks** — the **Health** tab scans your library for tracks whose audio file is missing (moved, deleted, or never linked) so you can fix or re-link them.
+- **AI playlist analysis** *(optional)* — get a genre/vibe writeup of a selected playlist. Stats are aggregated locally, then Claude summarizes them. Requires an Anthropic API key (see [AI Analyze setup](#ai-analyze-optional)).
 
 Everything runs on your own machine. Nothing about your library is uploaded
 anywhere — the app reads your local Rekordbox database and, to fetch playlists
@@ -22,7 +24,7 @@ feed, the iTunes Search API, and Spotify's public embed page).
 - **Node.js 18+** (for the frontend / Vite)
 - **Rekordbox 6 or 7** installed, with a library you've used at least once.
 
-No Spotify account or API credentials are needed — playlists and charts are read from public endpoints.
+No Spotify account or API credentials are needed — playlists and charts are read from public endpoints. The one optional credential is an **Anthropic API key**, needed only for the AI Analyze feature; everything else works without it (see [AI Analyze setup](#ai-analyze-optional)).
 
 ---
 
@@ -114,6 +116,26 @@ logging in.
 > Because the embed page doesn't expose album or track duration, those two
 > columns stay blank in the Compare table.
 
+### AI Analyze (optional)
+
+The **AI Analyze** button in the Library tab asks Claude for a genre/vibe
+writeup of the selected playlist. It's the only feature that needs a credential;
+skip this section if you don't want it — the rest of the app works without it.
+
+1. Get an API key at <https://console.anthropic.com/>.
+2. Create `backend/.env` (copy the template: `cp backend/.env.example backend/.env`).
+3. Add your key:
+
+   ```bash
+   ANTHROPIC_API_KEY=sk-ant-...
+   ```
+
+4. Restart the backend so it picks up the new value.
+
+Without a key, the button is disabled and the endpoint returns a setup message
+in the panel. Your library stats are computed locally; only the aggregated
+summary (BPM/genre/key counts, not your files) is sent to Anthropic.
+
 ---
 
 ## Top Charts
@@ -130,6 +152,19 @@ from the dropdown:
 
 Results are tagged **In library / Maybe / Missing** (same thresholds as below),
 with clickable stat chips to filter and a copy button per row.
+
+## Health (broken tracks)
+
+The **Health** tab scans your library for tracks whose audio file is missing, so
+you can re-link or remove them in Rekordbox. Two kinds are flagged:
+
+- **File missing** — Rekordbox has a file path stored, but nothing exists there
+  on disk (the file was moved or deleted, e.g. an unsynced cloud folder).
+- **No file** — the track has no path stored at all.
+
+Filter chips split the two, each row shows the stored path, and a copy button
+grabs it. Hit **Rescan** after moving files around (or use the Playlists ↻
+refresh) to re-check. Endpoint: `GET /api/library/broken`.
 
 ## How matching works (Compare & Top Charts)
 

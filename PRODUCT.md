@@ -79,3 +79,26 @@ Paste a Spotify playlist URL; the app fetches all tracks and shows which ones ar
 - The embed payload has no album or track duration, so those columns are blank in the Compare table (titles, artists, and Spotify track links are present).
 - Private playlists aren't readable (the embed page only serves public ones).
 - Matches against the full Rekordbox collection (deduplicated), not the currently-selected playlist
+
+---
+
+### Health — Broken Track Detection
+
+**Summary**
+Scans the library for tracks whose audio file is missing, so they can be re-linked or removed in Rekordbox before they fail to load mid-set.
+
+**User Flow**
+1. Click the **Health** tab in the header
+2. The library is scanned on open; a summary shows total tracks scanned and how many are broken
+3. Filter chips split the results: **File missing** / **No file** / **Broken** (all)
+4. Each row shows the track title/artist, its stored file path, and a copy button for the path
+5. **Rescan** re-checks after files are moved/restored (a clean library shows a "no broken tracks" state)
+
+**What counts as broken**
+- **`file_missing`** — Rekordbox has a `FolderPath` for the track, but nothing exists at that path on disk (moved, deleted, or an unsynced cloud folder)
+- **`no_file`** — the track has no path stored at all
+
+**Technical Notes**
+- Backend endpoint: `GET /api/library/broken` → `{ tracks, summary }`, where `summary` has `total`, `broken`, `no_file`, and `file_missing` counts
+- Detection runs against the current in-memory library snapshot (`rekordbox_parser.broken_tracks()`), using `os.path.exists` on each track's `FolderPath`
+- Rescan reflects the loaded snapshot; if you move files, refresh the library (or Rescan) to re-check
