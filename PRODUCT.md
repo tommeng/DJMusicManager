@@ -82,6 +82,50 @@ Paste a Spotify playlist URL; the app fetches all tracks and shows which ones ar
 
 ---
 
+### Top Charts
+
+**Summary**
+Pull a live "what's hot right now" chart and run it through the same matcher as Compare, so you can see which trending tracks you're missing and should add to your crates.
+
+**User Flow**
+1. Click the **Top Charts** tab in the header
+2. Pick a source from the dropdown (defaults to Spotify — Today's Top Hits); switching sources reloads the chart
+3. Each row is tagged **In library** / **Maybe** / **Missing**, with genre tags, the best local match + score, and an external link to the track
+4. Filter chips (Missing / Maybe / In library / Total) narrow the view; a copy button per row grabs "Title Artist" for sourcing
+5. **Refresh** re-fetches the current chart
+
+**Chart Sources**
+- **Spotify — Today's Top Hits** (`37i9dQZF1DXcBWIGoYBM5M`) — read from Spotify's public embed page (same source as Compare). That payload has no genres, so each track's genre is looked up via the iTunes Search API.
+- **Apple Music — Top Songs** — Apple's daily "most-played" RSS feed, which already includes genre tags.
+
+**Technical Notes**
+- Backend endpoint: `GET /api/top100?source=<id>`; sources are registered in the `CHART_SOURCES` dict in `main.py` — add a new one there to expose it in the dropdown
+- Same matcher and thresholds as Compare (`matching.py`): ≥85 match, 70–84 uncertain, <70 missing, scored against the full local library
+- No Spotify auth required (public embed page + public Apple RSS + iTunes Search API)
+
+---
+
+### AI Playlist Analysis
+
+**Summary**
+For a selected Rekordbox playlist, produce a genre/vibe writeup. Stats are aggregated locally in Python; only a compact summary is sent to Claude, which returns a structured analysis. Optional — requires an Anthropic API key.
+
+**User Flow**
+1. Select a playlist in the **Library** tab (the button doesn't appear for search results)
+2. Click **AI Analyze** in the track panel header
+3. A side panel opens with the locally-computed stats (BPM min/avg/max, top genres, top keys) plus Claude's analysis: overall vibe, primary genres, energy level, "best for" settings, and a few notable tracks
+4. Results are cached per playlist in `App.jsx`, so reopening the panel doesn't re-hit the API
+5. Without an API key the button is disabled and the endpoint returns a setup message that surfaces in the panel
+
+**Technical Notes**
+- Backend endpoint: `POST /api/playlists/{id}/analyze` (`backend/ai_analysis.py`)
+- Model: Claude Sonnet 4.6, with structured JSON output enforced via a JSON schema
+- Requires `ANTHROPIC_API_KEY` in `backend/.env` (see README "AI Analyze (optional)"); a missing key returns HTTP 400 with a setup message
+- Privacy: track stats are computed on the machine; only the aggregated summary and a capped representative sample (max 60 tracks) are sent to Anthropic — never the full library or your files
+- Errors map to clean HTTP codes: empty playlist / missing key → 400, upstream API failure → 502
+
+---
+
 ### Health — Broken Track Detection
 
 **Summary**
