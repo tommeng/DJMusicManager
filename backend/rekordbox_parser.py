@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from pyrekordbox import Rekordbox6Database
@@ -89,7 +90,25 @@ class RekordboxLibrary:
             "duration": int(content.Length) if content.Length else None,
             "genre": content.GenreName or "",
             "comments": content.Commnt or "",
+            "path": content.FolderPath or "",
         }
+
+    def broken_tracks(self):
+        """Tracks whose audio file is missing. Two kinds:
+        - "no_file": Rekordbox has no path for the track at all.
+        - "file_missing": a path is stored but nothing exists there on disk.
+        """
+        out = []
+        for t in self._all_tracks:
+            path = t.get("path") or ""
+            if not path:
+                reason = "no_file"
+            elif not os.path.exists(path):
+                reason = "file_missing"
+            else:
+                continue
+            out.append({**t, "broken_reason": reason})
+        return out
 
     @property
     def tree(self):

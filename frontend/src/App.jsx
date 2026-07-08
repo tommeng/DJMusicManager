@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Disc3, Library, GitCompareArrows, Flame } from 'lucide-react'
+import { Disc3, Library, GitCompareArrows, Flame, HeartPulse } from 'lucide-react'
 import PlaylistPanel from './components/PlaylistPanel'
 import TrackPanel from './components/TrackPanel'
 import AnalysisPanel from './components/AnalysisPanel'
 import ComparePage from './components/ComparePage'
 import TopTracksPage from './components/TopTracksPage'
+import BrokenTracksPage from './components/BrokenTracksPage'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 function App() {
@@ -163,6 +164,7 @@ function App() {
             <TabsTrigger value="library"><Library className="size-3.5" /> Library</TabsTrigger>
             <TabsTrigger value="compare"><GitCompareArrows className="size-3.5" /> Compare</TabsTrigger>
             <TabsTrigger value="top100"><Flame className="size-3.5" /> Top Charts</TabsTrigger>
+            <TabsTrigger value="health"><HeartPulse className="size-3.5" /> Health</TabsTrigger>
           </TabsList>
         </Tabs>
       </header>
@@ -208,6 +210,7 @@ function App() {
         )}
         {view === 'compare' && <ComparePage />}
         {view === 'top100' && <TopTracksPage />}
+        {view === 'health' && <BrokenTracksPage />}
       </div>
     </div>
   )
